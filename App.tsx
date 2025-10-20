@@ -1,5 +1,3 @@
-
-
 // Fix: Imported useState and useEffect from React to resolve "Cannot find name" errors.
 import React, { useState, useEffect } from 'react';
 import { mockProducts } from './data/mockProducts';
@@ -11,6 +9,7 @@ import ProductGrid from './components/ProductGrid';
 import OrderSummary from './components/OrderSummary';
 import SelectionModal from './components/SelectionModal';
 import QrScannerModal from './components/QrScannerModal';
+import QrCodeGeneratorModal from './components/QrCodeGeneratorModal';
 import CustomerInfoModal from './components/CustomerInfoModal';
 import PaymentModal from './components/PaymentModal';
 import OrderConfirmation from './components/OrderConfirmation';
@@ -22,6 +21,7 @@ import SearchModal from './components/SearchModal';
 const App: React.FC = () => {
     // State Management
     const [products] = useState<Product[]>(mockProducts);
+    const [menuProducts, setMenuProducts] = useState<Product[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
     const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -32,6 +32,7 @@ const App: React.FC = () => {
 
     const [activeRestaurant, setActiveRestaurant] = useState<Restaurant | null>(null);
     const [orderTypeDetails, setOrderTypeDetails] = useState<OrderTypeDetails | null>(null);
+    const [initialTableFromQR, setInitialTableFromQR] = useState<string | null>(null);
     const [customerInfo, setCustomerInfo] = useState<{ name: string; phone: string } | null>(null);
     const [orderForPayment, setOrderForPayment] = useState<Omit<Order, 'paymentMethod' | 'paymentStatus'> | null>(null);
     const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
@@ -42,6 +43,7 @@ const App: React.FC = () => {
     // Modal States
     const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
     const [isQrScannerModalOpen, setIsQrScannerModalOpen] = useState(false);
+    const [isQrGeneratorModalOpen, setIsQrGeneratorModalOpen] = useState(false);
     const [isCustomerInfoModalOpen, setIsCustomerInfoModalOpen] = useState(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -63,6 +65,13 @@ const App: React.FC = () => {
             const foundRestaurant = mockRestaurants.find(r => r.id === restaurantId);
             if (foundRestaurant) {
                 setActiveRestaurant(foundRestaurant);
+                
+                const restaurantMenu = products.filter(p => p.restaurantId === restaurantId);
+                setMenuProducts(restaurantMenu);
+
+                const uniqueCategories = ['All', ...new Set(restaurantMenu.map(p => p.category))];
+                setCategories(uniqueCategories);
+                
                 // Load customer info from local storage scoped to this restaurant
                 const savedCustomer = localStorage.getItem(`customerInfo_${restaurantId}`);
                 if (savedCustomer) {
@@ -76,24 +85,21 @@ const App: React.FC = () => {
         }
         
         if (table) {
+            setInitialTableFromQR(table);
             setOrderTypeDetails({ type: 'Dine In', table });
         } else {
             // Default to takeaway if no table is specified but a restaurant is.
             setOrderTypeDetails({ type: 'Takeaway', provider: 'Non-Online'});
         }
-
-        // Initialize categories from all products
-        const uniqueCategories = ['All', ...new Set(products.map(p => p.category))];
-        setCategories(uniqueCategories);
     }, [products]);
 
     useEffect(() => {
         if (activeCategory === 'All') {
-            setFilteredProducts(products);
+            setFilteredProducts(menuProducts);
         } else {
-            setFilteredProducts(products.filter(p => p.category === activeCategory));
+            setFilteredProducts(menuProducts.filter(p => p.category === activeCategory));
         }
-    }, [activeCategory, products]);
+    }, [activeCategory, menuProducts]);
     
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -180,7 +186,7 @@ const App: React.FC = () => {
         const taxAmount = subtotal * 0.08;
         const total = subtotal + taxAmount;
         
-        if (!activeRestaurant) return;
+        if (!activeRestaurant || !orderTypeDetails) return;
         
         const newOrder: Omit<Order, 'paymentMethod' | 'paymentStatus'> = {
             id: `order_${Date.now()}`,
@@ -191,7 +197,7 @@ const App: React.FC = () => {
             total,
             customerName: customer.name,
             customerPhone: customer.phone,
-            orderTypeDetails: orderTypeDetails!,
+            orderTypeDetails: orderTypeDetails,
             restaurantId: activeRestaurant.id,
             restaurantName: activeRestaurant.name,
         };
@@ -279,11 +285,24 @@ const App: React.FC = () => {
                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.636 6.364l.707.707M7 20v-1m9-15.364l.707-.707M17 4v1" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         Scan QR Code
                     </button>
+                    <div className="mt-8 text-sm text-gray-500">
+                        Are you restaurant staff?{' '}
+                        <button
+                            onClick={() => setIsQrGeneratorModalOpen(true)}
+                            className="font-medium text-indigo-600 hover:text-indigo-500"
+                        >
+                            Generate a QR Code
+                        </button>
+                    </div>
                  </div>
                  <QrScannerModal
                     isOpen={isQrScannerModalOpen}
                     onClose={() => setIsQrScannerModalOpen(false)}
                     onScanSuccess={handleQrScanSuccess}
+                />
+                <QrCodeGeneratorModal
+                    isOpen={isQrGeneratorModalOpen}
+                    onClose={() => setIsQrGeneratorModalOpen(false)}
                 />
             </div>
         )
@@ -313,6 +332,30 @@ const App: React.FC = () => {
                         </div>
                     </header>
                     
+                    {/* Order Type Toggle */}
+                    <div className="mb-4 bg-white p-3 rounded-lg shadow-sm border">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Order Type</h3>
+                        <div className="flex items-center rounded-lg border p-1 bg-gray-50 space-x-1">
+                            <button
+                                onClick={() => setOrderTypeDetails({ type: 'Dine In', table: initialTableFromQR! })}
+                                disabled={!initialTableFromQR}
+                                className={`w-1/2 px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center justify-center gap-2 ${orderTypeDetails?.type === 'Dine In' ? 'bg-indigo-600 text-white shadow' : 'text-gray-700 hover:bg-gray-200'} ${!initialTableFromQR ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                aria-label="Set order type to Dine In"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6c0 1.887.674 3.65 1.796 4.996l-.23 1.832a.5.5 0 00.62.621l1.832-.23A6 6 0 1010 2zM6 8a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7A.5.5 0 016 8zm0 2.5a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z" /></svg>
+                                Dine In
+                            </button>
+                            <button
+                                onClick={() => setOrderTypeDetails({ type: 'Takeaway', provider: 'Non-Online' })}
+                                className={`w-1/2 px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${orderTypeDetails?.type === 'Takeaway' ? 'bg-indigo-600 text-white shadow' : 'text-gray-700 hover:bg-gray-200'}`}
+                                aria-label="Set order type to Takeaway"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v1H5V4zM5 7h10v9a2 2 0 01-2 2H7a2 2 0 01-2-2V7z" /></svg>
+                                Takeaway
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Filters */}
                     <div className="sticky top-0 bg-gray-50/80 backdrop-blur-sm z-10 py-3 mb-4 flex items-center gap-2 md:gap-4">
                         <button
@@ -409,7 +452,7 @@ const App: React.FC = () => {
             <SearchModal
                 isOpen={isSearchModalOpen}
                 onClose={() => setIsSearchModalOpen(false)}
-                products={products}
+                products={menuProducts}
                 onProductSelect={handleSearchSelect}
             />
 

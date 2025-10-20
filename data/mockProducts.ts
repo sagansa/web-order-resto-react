@@ -8,6 +8,7 @@ export const mockProducts: Product[] = [
     imageUrl: 'https://picsum.photos/seed/espresso/300/200',
     description: 'Strong and bold classic espresso.',
     category: 'Coffee',
+    restaurantId: 'kafe-senja',
     variants: [
       {
         id: 'var_espresso_size',
@@ -43,6 +44,7 @@ export const mockProducts: Product[] = [
     imageUrl: 'https://picsum.photos/seed/pizza/300/200',
     description: 'Classic Margherita with fresh mozzarella and basil.',
     category: 'Food',
+    restaurantId: 'resto-lezat',
     variants: [
       {
         id: 'var_pizza_size',
@@ -92,6 +94,7 @@ export const mockProducts: Product[] = [
     imageUrl: 'https://picsum.photos/seed/burger/300/200',
     description: 'Juicy beef patty with lettuce, tomato, and onion.',
     category: 'Food',
+    restaurantId: 'resto-lezat',
     modifiers: [
       {
         id: 'mod_burger_cheese',
@@ -127,6 +130,7 @@ export const mockProducts: Product[] = [
     imageUrl: 'https://picsum.photos/seed/croissant/300/200',
     description: 'Buttery and flaky French croissant.',
     category: 'Bakery',
+    restaurantId: 'kafe-senja',
   },
   {
     id: 'prod_5',
@@ -135,6 +139,7 @@ export const mockProducts: Product[] = [
     imageUrl: 'https://picsum.photos/seed/latte/300/200',
     description: 'Chilled espresso with milk over ice.',
     category: 'Coffee',
+    restaurantId: 'kafe-senja',
     variants: [
       {
         id: 'var_latte_size',

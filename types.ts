@@ -21,7 +21,7 @@ export interface ModifierOption {
 }
 
 export interface ModifierGroup {
-  id: string;
+  id:string;
   name: string;
   minSelection: number;
   maxSelection: number;
@@ -35,6 +35,7 @@ export interface Product {
   imageUrl: string;
   description: string;
   category: string;
+  restaurantId: string;
   variants?: VariantGroup[];
   modifiers?: ModifierGroup[];
   priceAdjustments?: {
