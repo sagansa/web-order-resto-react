@@ -310,7 +310,7 @@ const App: React.FC = () => {
 
     return (
         <div className="bg-gray-50 font-sans antialiased text-gray-800">
-            <div className={`relative min-h-screen lg:flex lg:overflow-hidden ${isMobile ? 'overflow-x-hidden w-screen' : ''}`}>
+            <div className={`relative min-h-screen lg:flex lg:overflow-hidden ${isMobile ? 'overflow-x-hidden w-full' : ''}`}>
                 <main className="flex-1 p-4 lg:p-6 lg:overflow-y-auto">
                     {/* Header */}
                     <header className="mb-4 flex justify-between items-center">

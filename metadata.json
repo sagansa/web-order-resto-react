@@ -1,5 +1,5 @@
 {
-  "name": "React POS System",
+  "name": "Web Order Restaurant",
   "description": "A Point of Sale application built with React, TypeScript, and Tailwind CSS, featuring product selection with variants and modifiers.",
   "requestFramePermissions": [
     "camera"
